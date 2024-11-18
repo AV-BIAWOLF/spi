@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-//mode ¹   CPOL CPHA
+//mode â„–   CPOL CPHA
 //mode 0     0     0
 //mode 1     0     1
 //mode 2     1     0
@@ -36,13 +36,15 @@ module spi_main #(
     
    logic [DATA_WIDTH-1:0] r_data;
    logic [16:0] counter_clks;
-   logic w_CPOL;
-   logic w_CPHA;
+   logic w_CPOL = CPOL;
+   logic w_CPHA = CPHA;
    logic r_SCLK;
    logic w_Rise_Edge;
    logic w_Fall_Edge;
    logic [4:0] count_TX_MOSI; 
    logic [4:0] count_RX_MISO; 
+   
+   logic r_SS;
    
    
    always @(posedge clk) begin
@@ -62,12 +64,12 @@ module spi_main #(
             end
             
             if (counter_clks == ((DIV_FACTOR)-1)) begin   // -1
-                counter_clks <= 0;  // Ñáðîñ ñ÷åò÷èêà
+                counter_clks <= 0;  // Ð¡Ð±Ñ€Ð¾Ñ ÑÑ‡ÐµÑ‚Ñ‡Ð¸ÐºÐ°
                 w_Fall_Edge <= 1'b1;
                 r_SCLK <= ~r_SCLK;
             end
             else begin
-                counter_clks <= counter_clks + 1;  // Óâåëè÷åíèå ñ÷åò÷èêà
+                counter_clks <= counter_clks + 1;  // Ð£Ð²ÐµÐ»Ð¸Ñ‡ÐµÐ½Ð¸Ðµ ÑÑ‡ÐµÑ‚Ñ‡Ð¸ÐºÐ°
             end
         end
     end
@@ -105,7 +107,6 @@ module spi_main #(
                 o_MOSI <= 0;
             end
             
-            
         end
 //        o_data_raedy_TX <= 0;
     end
@@ -115,6 +116,7 @@ module spi_main #(
         if (reset) begin
             count_RX_MISO <= 0;
             o_data_done <= 0;
+            o_data_out <= 0;
         end 
         else if ((w_Rise_Edge & ~CPHA) | (w_Fall_Edge & CPHA)) begin
             if (count_RX_MISO < 10'd8) begin 
@@ -126,8 +128,14 @@ module spi_main #(
                 o_data_done <= 1;
                 count_RX_MISO <= 0;
             end
+       end
+       //
+       else begin 
+            o_data_done <= 0;
        end 
+       //
     end
+    
     
     
 endmodule
